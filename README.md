@@ -27,7 +27,7 @@ or using Docker buildx with:
 # Usage
 
 To use Odoo you need also a running Postgres database. You can setup them both
-using docker compose:
+using the following docker-compose.yaml file:
 
 ```yaml
 version: '3'
@@ -72,4 +72,28 @@ ODOO_DATABASE_PASSWORD: odoo
 Finally start your containers using:
 
     docker compose up -d
+
+# Configuration
+
+You can set the /opt/odoo/odoo.conf configuration file like the following:
+
+```
+[options]
+addons_path = /opt/odoo/src/addons
+data_dir = /opt/odoo/data
+http_port = 8069
+proxy_mode = True
+logfile = /opt/odoo/logs/server.log
+pidfile = /opt/odoo/server.pid
+```
+
+Then you can mount your odoo.conf file by adding a line in your
+docker-compose.yaml file:
+
+```
+    ...
+    volumes:
+      - ./odoo.conf:/opt/odoo/odoo.conf:ro
+    ...
+```
 
