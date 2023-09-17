@@ -24,6 +24,22 @@ or using Docker buildx with:
 
     docker buildx build -t author/name:version .
 
+# Environment Variables
+
+Tweak these environment variables to easily connect to a postgres server:
+
+- **ODOO_DATABASE_HOST**: The address of the postgres server.
+  If you used a postgres container, set to the name of the container.
+  Defaults to *postgres*.
+- **ODOO_DATABASE_PORT**: The port the postgres server is listening to.
+  Defaults to *5432*.
+- **ODOO_DATABASE_USER**: The postgres role with which Odoo will connect.
+  If you used a postgres container, set to the same value as POSTGRES_USER.
+  Defaults to *postgres*.
+- **ODOO_DATABASE_PASSWORD**: The password of the postgres role with which Odoo will connect.
+  If you used a postgres container, set to the same value as POSTGRES_PASSWORD.
+  Defaults to *password*.
+
 # Usage
 
 To use Odoo you need also a running Postgres database. You can setup them both
@@ -73,7 +89,7 @@ Finally start your containers using:
 
     docker compose up -d
 
-# Configuration
+# Run Odoo with a custom configuration
 
 You can set the /opt/odoo/odoo.conf configuration file like the following:
 
