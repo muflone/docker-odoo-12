@@ -1,5 +1,17 @@
 FROM debian:10.13-slim
 
+LABEL APP="Odoo 12"
+ENV ODOO_HOME="/opt/odoo" \
+    ODOO_VERSION=12.0 \
+    ODOO_DATABASE_HOST=postgres \
+    ODOO_DATABASE_PORT=5432 \
+    ODOO_DATABASE_USER=postgres \
+    ODOO_DATABASE_PASSWORD=password \
+    ODOO_RC="${ODOO_HOME}/opt/odoo/odoo.conf" \
+    OS_ARCH="${TARGETARCH:-amd64}" \
+    OS_FLAVOUR="debian-10" \
+    OS_NAME="linux"
+
 # Install requirements
 RUN apt-get --assume-yes update && \
     apt-get --assume-yes --no-install-recommends install \
@@ -10,30 +22,25 @@ RUN apt-get --assume-yes update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Odoo
-RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo && \
-    su odoo -c 'git clone https://github.com/odoo/odoo.git --depth 1 --branch 12.0 /opt/odoo/src' && \
-    python3 -m venv /opt/odoo/venv && \
-    /opt/odoo/venv/bin/python3 -m pip install wheel && \
-    sed -i 's/gevent==1.5.0/gevent==1.3.7/' /opt/odoo/src/requirements.txt && \
-    /opt/odoo/venv/bin/python3 -m pip install -r /opt/odoo/src/requirements.txt
+RUN useradd -m -d "${ODOO_HOME}" -U -r -s /bin/bash odoo && \
+    su odoo -c "git clone https://github.com/odoo/odoo.git --depth 1 --branch 12.0 "${ODOO_HOME}/src"" && \
+    python3 -m venv "${ODOO_HOME}/venv" && \
+    "${ODOO_HOME}/venv/bin/python3" -m pip install wheel && \
+    sed -i 's/gevent==1.5.0/gevent==1.3.7/' "${ODOO_HOME}/src/requirements.txt" && \
+    "${ODOO_HOME}/venv/bin/python3" -m pip install -r "${ODOO_HOME}/src/requirements.txt"
 
-LABEL APP="Odoo 12"
+# Configure Odoo
+RUN install -d -m 755 -o odoo -g odoo "${ODOO_HOME}/data" \
+    install -d -m 755 -o odoo -g odoo "${ODOO_HOME}/logs"
+
+USER odoo
+WORKDIR "${ODOO_HOME}/src"
+VOLUME ["${ODOO_HOME}/data"]
+VOLUME ["${ODOO_HOME}/logs"]
 EXPOSE 8069/tcp \
        8072/tcp
-USER odoo
-WORKDIR /opt/odoo/src
-VOLUME ["/opt/odoo/data"]
-VOLUME ["/opt/odoo/logs"]
 
-ENV ODOO_VERSION=12.0 \
-    ODOO_DATABASE_HOST=postgres \
-    ODOO_DATABASE_PORT=5432 \
-    ODOO_DATABASE_USER=postgres \
-    ODOO_DATABASE_PASSWORD=password \
-    ODOO_RC=/opt/odoo/odoo.conf \
-    OS_ARCH="${TARGETARCH:-amd64}" \
-    OS_FLAVOUR="debian-10" \
-    OS_NAME="linux"
-
-COPY launch.sh "/opt/odoo/"
+COPY launch.sh "${ODOO_HOME}/launch.sh"
+COPY odoo.conf "${ODOO_RC}"
 ENTRYPOINT ["bash", "-c", "/opt/odoo/launch.sh"]
+
